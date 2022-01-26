@@ -1,0 +1,10 @@
+.cache/
+node_modules/
+closet/
+rat/
+.env
+.sample.env
+.gitignore
+Closet.sol
+Dockerfile
+Rat.sol
