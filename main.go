@@ -159,7 +159,7 @@ func main() {
 								log.Println(err)
 								continue
 							}
-							token := tokens.RatTokenWithMetaAndId{Id: &id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: owner, URI: uri}, OpenseaMeta: meta}}
+							token := tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: owner, URI: uri}, OpenseaMeta: meta}}
 							rats = append(rats, token)
 						}
 					}
