@@ -1,0 +1,48 @@
+name: "Build and Deploy"
+
+on: 
+  push:
+    branches:
+      - "main"
+      - "development"
+
+jobs:
+  buildAndDeploy:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Setup Go  
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Setup Cloud SDK Auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Login to Docker
+        run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
+      - name: Add gcloud cred helper
+        run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
+      - name: Build go binary
+        run: GOOS=linux GOARCH=amd64 go build -o exec/caching-service  
+      - name: Build Dev Docker Image
+        if: ${{contains(github.ref, 'development')}}
+        run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev . --platform linux/amd64
+      - name: Build Prod Docker Image
+        if: ${{contains(github.ref, 'main')}}
+        run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache . --platform linux/amd64
+      - name: Push Dev Docker Image
+        if: ${{contains(github.ref, 'development')}}
+        run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev
+      - name: Push Prod Docker Image
+        if: ${{contains(github.ref, 'main')}}
+        run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache
+      - name: Reset Dev Instance
+        if: ${{contains(github.ref, 'development')}}
+        run: gcloud compute instances reset caching-service-dev --zone=northamerica-northeast2-a
+      - name: Reset Prod Instance
+        if: ${{contains(github.ref, 'main')}}
+        run: gcloud compute instances reset caching-service --zone=northamerica-northeast2-a

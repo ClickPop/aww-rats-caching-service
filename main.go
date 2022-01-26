@@ -71,7 +71,7 @@ func main() {
 					switch l.Topics[0].Hex() {
 					case blockchain.RatABI.Events["Transfer"].ID.Hex():
 						from := l.Topics[1]
-						to := l.Topics[1]
+						to := l.Topics[2]
 						id := l.Topics[3].Big()
 						rats = append(rats, tokens.RatTokenWithMetaAndId{Id:  id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: common.BytesToAddress(to.Bytes())}}})
 						log.Println("Rat transfer", from, to, id)
