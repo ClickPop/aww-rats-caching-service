@@ -147,7 +147,7 @@ func main() {
 						if err != nil {
 							log.Println(err)
 						} else {
-							id := data[0].(big.Int)
+							id := data[0].(*big.Int)
 							uri := data[1].(string)
 							owner, err := blockchain.RatContract.OwnerOf(&bind.CallOpts{Context: context.Background()}, big.NewInt(int64(1)))
 							if err != nil {

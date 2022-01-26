@@ -50650,5 +50650,73 @@
         "value": "Pet Rat"
       }
     ]
+  },
+  "806": {
+    "owner": "0xe8860707544f8553b4cf843883a6608ce099b48b",
+    "uri": "http://ipfs.io/ipfs/QmexZGXFsue4eFRBexUbEYixq8VERE4K4mVyM83CwsDuUW",
+    "name": "0806",
+    "description": "This little rat is a Pet Rat, that means they're a little cutie pie. Their favorite hobbies include bundling up in cozy blankets, loving their owner, and doing cannonballs.",
+    "image": "ipfs://QmYSBmK1j5w8igQByMNA8xfK5c5mTMVdjqMKenXJN8L9nR",
+    "attributes": [
+      {
+        "trait_type": "Accessory",
+        "value": "Earring Gold"
+      },
+      {
+        "trait_type": "Background",
+        "value": "Green Tie Dye"
+      },
+      {
+        "trait_type": "Color",
+        "value": "Red"
+      },
+      {
+        "trait_type": "Ears",
+        "value": "Normal Pink"
+      },
+      {
+        "trait_type": "Eyes",
+        "value": "Happy"
+      },
+      {
+        "trait_type": "Pet",
+        "value": "Caterpillar Green"
+      },
+      {
+        "trait_type": "Snout",
+        "value": "Ooh"
+      },
+      {
+        "trait_type": "Tail",
+        "value": "Normal Pink"
+      },
+      {
+        "trait_type": "Rattitude",
+        "display_type": "number",
+        "value": 2,
+        "max_value": 7
+      },
+      {
+        "trait_type": "Cunning",
+        "display_type": "number",
+        "value": 0,
+        "max_value": 7
+      },
+      {
+        "trait_type": "Cuteness",
+        "display_type": "number",
+        "value": 3,
+        "max_value": 7
+      },
+      {
+        "trait_type": "birthday",
+        "display_type": "date",
+        "value": 1643225705
+      },
+      {
+        "trait_type": "Type",
+        "value": "Pet Rat"
+      }
+    ]
   }
 }
