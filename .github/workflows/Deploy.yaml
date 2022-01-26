@@ -23,7 +23,7 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
       - name: Login to Docker
-        run: echo ${{ secrets.GCP_CREDENTIALS }} | base64 | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
+        run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
       - name: Build go binary
         run: GOOS=linux GOARCH=amd64 go build -o exec/caching-service  
       - name: Build Dev Docker Image
