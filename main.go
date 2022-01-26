@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/closet"
@@ -149,12 +150,12 @@ func main() {
 						} else {
 							id := data[0].(*big.Int)
 							uri := data[1].(string)
-							owner, err := blockchain.RatContract.OwnerOf(&bind.CallOpts{Context: context.Background()}, big.NewInt(int64(1)))
+							owner, err := blockchain.RatContract.OwnerOf(&bind.CallOpts{Context: context.Background()}, id)
 							if err != nil {
 								log.Println(err)
 								continue
 							}
-							meta, err := tokens.GetRatMeta(uri)
+							meta, err := tokens.GetRatMeta(strings.Replace(uri, "ipfs://", "http://ipfs.io/ipfs/", 1))
 							if err != nil {
 								log.Println(err)
 								continue
