@@ -18,13 +18,13 @@ var EthClient *ethclient.Client
 var RatABI abi.ABI
 var ClosetABI abi.ABI
 var RatContract *rat.Rat
-var ClosetContract *closet.Closet 
+var ClosetContract *closet.Closet
 var Opts *bind.CallOpts
 var ClosetTokenURI string
 
 func Init() {
 	var err error
-	
+
 	EthClient, err = ethclient.Dial(env.POLYGON_ENDPOINT)
 	if err != nil {
 		log.Fatal(err)

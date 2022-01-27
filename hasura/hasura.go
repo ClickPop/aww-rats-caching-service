@@ -14,56 +14,56 @@ import (
 )
 
 type RatInput struct {
-		Id          *big.Int `json:"id,omitempty"`
-		Owner       common.Address   `json:"owner,omitempty"`
-		Name        string   `json:"name,omitempty"`
-		Image       string   `json:"image,omitempty"`
-		Description string   `json:"description,omitempty"`
-		Accessory   string   `json:"accessory,omitempty"`
-		Background  string   `json:"background,omitempty"`
-		Color       string   `json:"color,omitempty"`
-		Ears        string   `json:"ears,omitempty"`
-		Eyes        string   `json:"eyes,omitempty"`
-		Generation  string   `json:"generation,omitempty"`
-		Glasses     string   `json:"glasses,omitempty"`
-		Hand        string   `json:"hand,omitempty"`
-		Hat         string   `json:"hat,omitempty"`
-		Head        string   `json:"head,omitempty"`
-		Markings    string   `json:"markings,omitempty"`
-		Pet         string   `json:"pet,omitempty"`
-		Shirt       string   `json:"shirt,omitempty"`
-		Snout       string   `json:"snout,omitempty"`
-		Tail        string   `json:"tail,omitempty"`
-		Torso       string   `json:"torso,omitempty"`
-		Cunning     float64      `json:"cunning,omitempty"`
-		Cuteness    float64      `json:"cuteness,omitempty"`
-		Rattitude   float64      `json:"rattitude,omitempty"`
+	Id          *big.Int       `json:"id,omitempty"`
+	Owner       common.Address `json:"owner,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Image       string         `json:"image,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Accessory   string         `json:"accessory,omitempty"`
+	Background  string         `json:"background,omitempty"`
+	Color       string         `json:"color,omitempty"`
+	Ears        string         `json:"ears,omitempty"`
+	Eyes        string         `json:"eyes,omitempty"`
+	Generation  string         `json:"generation,omitempty"`
+	Glasses     string         `json:"glasses,omitempty"`
+	Hand        string         `json:"hand,omitempty"`
+	Hat         string         `json:"hat,omitempty"`
+	Head        string         `json:"head,omitempty"`
+	Markings    string         `json:"markings,omitempty"`
+	Pet         string         `json:"pet,omitempty"`
+	Shirt       string         `json:"shirt,omitempty"`
+	Snout       string         `json:"snout,omitempty"`
+	Tail        string         `json:"tail,omitempty"`
+	Torso       string         `json:"torso,omitempty"`
+	Cunning     float64        `json:"cunning,omitempty"`
+	Cuteness    float64        `json:"cuteness,omitempty"`
+	Rattitude   float64        `json:"rattitude,omitempty"`
 }
 
 type ClosetPieceInput struct {
-		Id              *big.Int `json:"id,omitempty"`
-		Name            string   `json:"name,omitempty"`
-		Image           string   `json:"image,omitempty"`
-		Description     string   `json:"description,omitempty"`
-		Cost            *big.Int `json:"cost,omitempty"`
-		MaxTokens       *big.Int `json:"max_tokens,omitempty"`
-		MaxPerWallet    *big.Int `json:"max_per_wallet,omitempty"`
-		Active          bool     `json:"active,omitempty"`
-		RevShareAddress string   `json:"rev_share_address,omitempty"`
-		RevShareAmount  [2]*big.Int   `json:"rev_share_amount,omitempty"`
-		PieceType       string   `json:"piece_type,omitempty"`
-		Collection      string   `json:"collection,omitempty"`
-		Sponsor         string   `json:"sponsor,omitempty"`
-		SponsorURL      string   `json:"sponsor_url,omitempty"`
-		Cunning         float64      `json:"cunning,omitempty"`
-		Cuteness        float64      `json:"cuteness,omitempty"`
-		Rattitude       float64      `json:"rattitude,omitempty"`
+	Id              *big.Int    `json:"id,omitempty"`
+	Name            string      `json:"name,omitempty"`
+	Image           string      `json:"image,omitempty"`
+	Description     string      `json:"description,omitempty"`
+	Cost            *big.Int    `json:"cost,omitempty"`
+	MaxTokens       *big.Int    `json:"max_tokens,omitempty"`
+	MaxPerWallet    *big.Int    `json:"max_per_wallet,omitempty"`
+	Active          bool        `json:"active,omitempty"`
+	RevShareAddress string      `json:"rev_share_address,omitempty"`
+	RevShareAmount  [2]*big.Int `json:"rev_share_amount,omitempty"`
+	PieceType       string      `json:"piece_type,omitempty"`
+	Collection      string      `json:"collection,omitempty"`
+	Sponsor         string      `json:"sponsor,omitempty"`
+	SponsorURL      string      `json:"sponsor_url,omitempty"`
+	Cunning         float64     `json:"cunning,omitempty"`
+	Cuteness        float64     `json:"cuteness,omitempty"`
+	Rattitude       float64     `json:"rattitude,omitempty"`
 }
 
 type ClosetTokenInput struct {
-		TokenId *big.Int `json:"token_id,omitempty"`
-		Owner   common.Address   `json:"owner,omitempty"`
-		Amount  *big.Int `json:"amount,omitempty"`
+	TokenId *big.Int       `json:"token_id,omitempty"`
+	Owner   common.Address `json:"owner,omitempty"`
+	Amount  *big.Int       `json:"amount,omitempty"`
 }
 
 type Body struct {
@@ -182,7 +182,7 @@ func handleClosetTransfers(txs []tokens.ClosetTransfer) []ClosetTokenInput {
 		id := tx.Id
 		from := tx.From
 		to := tx.To
-		
+
 		if addrToIdListMap[from] == nil {
 			addrToIdListMap[from] = make([]*big.Int, 0)
 		}
@@ -211,7 +211,7 @@ func handleClosetTransfers(txs []tokens.ClosetTransfer) []ClosetTokenInput {
 	}
 
 	for addr, tokens := range addrToIdListMap {
-		if (addr == common.BigToHash(big.NewInt(0))) {
+		if addr == common.BigToHash(big.NewInt(0)) {
 			continue
 		}
 		log.Println("Handling token changes for address ", common.BytesToAddress(addr.Bytes()))

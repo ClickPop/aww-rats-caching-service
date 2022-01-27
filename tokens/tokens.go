@@ -29,7 +29,7 @@ type OpenseaMetaAttribute struct {
 
 type RatToken struct {
 	Owner common.Address `json:"owner,omitempty"`
-	URI   string `json:"uri,omitempty"`
+	URI   string         `json:"uri,omitempty"`
 }
 
 type RatTokenWithMeta struct {
@@ -53,15 +53,15 @@ type ClosetTokenWithMetaAndId struct {
 }
 
 type ClosetTransfers struct {
-	Block     *big.Int              `json:"block,omitempty"`
+	Block     *big.Int                       `json:"block,omitempty"`
 	Transfers map[common.Hash]ClosetTransfer `json:"transfers,omitempty"`
 }
 
 type ClosetTransfer struct {
 	From   common.Hash `json:"from,omitempty"`
 	To     common.Hash `json:"to,omitempty"`
-	Id     *big.Int `json:"id,omitempty"`
-	Amount *big.Int `json:"amount,omitempty"`
+	Id     *big.Int    `json:"id,omitempty"`
+	Amount *big.Int    `json:"amount,omitempty"`
 }
 
 func GetRatMeta(uri string) (OpenseaMeta, error) {
@@ -83,17 +83,17 @@ func GetRatMeta(uri string) (OpenseaMeta, error) {
 
 func GetClosetMeta(id *big.Int) (OpenseaMeta, error) {
 	resp, err := http.Get(strings.Replace(blockchain.ClosetTokenURI, "{id}", fmt.Sprintf("%s", id.String()), 1))
-		if err != nil {
-			return OpenseaMeta{}, err
-		}
-		bodyData, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return OpenseaMeta{}, err
-		}
-		var meta OpenseaMeta
-		err = json.Unmarshal(bodyData, &meta)
-		if err != nil {
-			return OpenseaMeta{}, err
-		}
-		return meta, nil
+	if err != nil {
+		return OpenseaMeta{}, err
+	}
+	bodyData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return OpenseaMeta{}, err
+	}
+	var meta OpenseaMeta
+	err = json.Unmarshal(bodyData, &meta)
+	if err != nil {
+		return OpenseaMeta{}, err
+	}
+	return meta, nil
 }
