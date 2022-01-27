@@ -228,9 +228,6 @@ func handleClosetTransfers(txs []tokens.ClosetTransfer) []ClosetTokenInput {
 			log.Println("error: ", err)
 		}
 		for i, bal := range bals {
-			if common.BytesToAddress(addr.Bytes()).Hex() == "0x65fd4df72A4041F8F97EeF1f379766a5C4858aC3" && tokensArr[i].Cmp(big.NewInt(13)) == 0 {
-				log.Println(bal)
-			}
 			token := ClosetTokenInput{TokenId: tokensArr[i], Owner: common.BytesToAddress(addr.Bytes()), Amount: bal}
 			changes = append(changes, token)
 		}
