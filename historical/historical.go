@@ -34,7 +34,7 @@ func addApiKey(req *http.Request) {
 func loadRats() []tokens.RatTokenWithMetaAndId {
 	numRats, err := blockchain.RatContract.NumTokens(blockchain.Opts)
 	if err != nil {
-			log.Println(err)
+		log.Println(err)
 	}
 	var rats = map[int]tokens.RatTokenWithMeta{}
 	ratTokensFile, err := os.OpenFile("./.cache/ratTokens.json", os.O_WRONLY, os.ModeAppend)

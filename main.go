@@ -73,7 +73,7 @@ func main() {
 						from := l.Topics[1]
 						to := l.Topics[2]
 						id := l.Topics[3].Big()
-						rats = append(rats, tokens.RatTokenWithMetaAndId{Id:  id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: common.BytesToAddress(to.Bytes())}}})
+						rats = append(rats, tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: common.BytesToAddress(to.Bytes())}}})
 						log.Println("Rat transfer", from, to, id)
 					}
 				case env.CLOSET_ADDR:
@@ -118,18 +118,18 @@ func main() {
 						event := struct {
 							Id    *big.Int
 							Value *big.Int
-							}{}
-							err = blockchain.ClosetABI.UnpackIntoInterface(&event, "TransferSingle", l.Data)
-							if err != nil {
-								log.Println("Error:", err)
-							}
-							from := l.Topics[2]
-							to := l.Topics[3]
-							id := event.Id
-							amount := event.Value
-							transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-							closetTokens = append(closetTokens, transfer)
-							log.Println("Closet transfer", from, to, amount, event)
+						}{}
+						err = blockchain.ClosetABI.UnpackIntoInterface(&event, "TransferSingle", l.Data)
+						if err != nil {
+							log.Println("Error:", err)
+						}
+						from := l.Topics[2]
+						to := l.Topics[3]
+						id := event.Id
+						amount := event.Value
+						transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
+						closetTokens = append(closetTokens, transfer)
+						log.Println("Closet transfer", from, to, amount, event)
 					}
 				}
 			}
@@ -166,7 +166,7 @@ func main() {
 					}
 				}
 			}
-			
+
 			if len(rats) > 0 || len(closetPieces) > 0 || len(closetTokens) > 0 {
 				hasura.CallHasura(rats, closetPieces, closetTokens)
 			}
