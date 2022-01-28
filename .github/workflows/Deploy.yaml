@@ -46,3 +46,9 @@ jobs:
       - name: Update Prod Instance
         if: ${{contains(github.ref, 'main')}}
         run: gcloud compute instances update-container caching-service --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache
+      - name: Prune Dev Instance
+        if: ${{contains(github.ref, 'development')}}
+        run: gcloud compute ssh caching-service-dev --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
+      - name: Prune Prod Instance
+        if: ${{contains(github.ref, 'main')}}
+        run: gcloud compute ssh caching-service --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
