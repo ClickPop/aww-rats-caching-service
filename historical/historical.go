@@ -55,14 +55,18 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 		log.Fatal(err)
 	}
 	json.Unmarshal(cacheFile, &rats)
-	for i := 100 + len(rats); i < int(numRats.Int64()+100); i++ {
+	for i := 100; i < int(numRats.Int64()+100); i++ {
 		uri, err := blockchain.RatContract.TokenURI(blockchain.Opts, big.NewInt(int64(i)))
 		if err != nil {
 			log.Fatal(i, err)
 		}
 		owner, err := blockchain.RatContract.OwnerOf(blockchain.Opts, big.NewInt(int64(i)))
-		currToken := tokens.RatToken{Owner: owner, URI: strings.Replace(uri, "ipfs://", "http://ipfs.io/ipfs/", 1)}
-		rats[i] = tokens.RatTokenWithMeta{RatToken: currToken}
+		currToken := tokens.RatToken{Owner: owner, URI: uri}
+		meta := rats[i].OpenseaMeta
+		if rats[i].URI != "" && rats[i].URI != currToken.URI {
+			meta = tokens.OpenseaMeta{}
+		}
+		rats[i] = tokens.RatTokenWithMeta{RatToken: currToken, OpenseaMeta: meta}
 		ratJSON, err := json.MarshalIndent(rats, "", "  ")
 		ratTokensFile.Truncate(0)
 		ratTokensFile.WriteAt(ratJSON, 0)
@@ -82,7 +86,7 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 		if v.Attributes != nil {
 			continue
 		}
-		meta, err := tokens.GetRatMeta(v.URI)
+		meta, err := tokens.GetRatMeta(strings.Replace(v.URI, "ipfs://", "http://ipfs.io/ipfs/", 1))
 		if err != nil {
 			log.Fatal(err)
 		}
