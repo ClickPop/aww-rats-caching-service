@@ -26,8 +26,9 @@ jobs:
         run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
       - name: Add gcloud cred helper
         run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
-      - name: Build go binary
-        run: GOOS=linux GOARCH=amd64 go build -o exec/caching-service  
+      - name: Make
+        run: make all  
+      - run: sudo chmod 777 exec/caching-service
       - name: Build Dev Docker Image
         if: ${{contains(github.ref, 'development')}}
         run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev . --platform linux/amd64

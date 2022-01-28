@@ -9,13 +9,13 @@ ifeq ($(shell go env GOOS),darwin)
 endif
 
 ifeq ($(shell go env GOOS),linux)
-	installSolc = add-apt-repository -y ppa:ethereum/ethereum && apt update && apt install -y solc
-	installProtoc = apt install -y protobuf-compiler
-	installGeth = apt-get install ethereum
+	installSolc = sudo add-apt-repository -y ppa:ethereum/ethereum && sudo apt update && sudo apt install -y solc
+	installProtoc = sudo apt install -y protobuf-compiler
+	installGeth = sudo apt-get install ethereum
 endif
 
 
-all: InstallSolc InstallProtoc InstallDeps BuildABIGEN GetContract Compile BuildABI
+all: InstallSolc InstallProtoc InstallDeps BuildABIGEN GetContract Compile BuildABI BuildBinary
 
 contract: GetContract Compile BuildABI
 
@@ -24,7 +24,7 @@ build: BuildBinary
 docker: BuildBinary DockerBuild
 
 InstallDeps: 
-	go get && npm install
+	go get && pnpm install
 
 InstallProtoc:
 	$(installProtoc)
@@ -36,8 +36,8 @@ BuildABIGEN:
 	$(installGeth)
 
 GetContract:
-	curl "https://$(shell echo $(ACCESS_TOKEN)@$(CONTRACT_URL))/Rat.sol" -o Rat.sol \
-	&& curl "https://$(shell echo $(ACCESS_TOKEN)@$(CONTRACT_URL))/Closet.sol" -o Closet.sol
+	curl -L "https://raw.githubusercontent.com/ClickPop/aww-rats-client/main/smart-contracts/src/contracts/Rat.sol" -o Rat.sol \
+	&& curl -L "https://raw.githubusercontent.com/ClickPop/aww-rats-client/main/smart-contracts/src/contracts/Closet.sol" -o Closet.sol
 
 Compile: 
 	solc @openzeppelin/=$(shell pwd)/node_modules/@openzeppelin/ --optimize --abi --bin ./Rat.sol -o build --overwrite \
@@ -50,7 +50,7 @@ BuildABI:
 BuildBinary:
 	GOOS=linux \
 	GOARCH=amd64 \
-	go build -o exec/caching-service
+	go build -o exec/caching-service -a
 
 DockerBuild:
 	docker build -t aww-rats-caching-service . --platform linux/amd64
