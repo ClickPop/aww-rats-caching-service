@@ -16,6 +16,12 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
+      - name: Setup Node runtime
+        uses: actions/setup-node@v2
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.24.2
       - name: Setup Cloud SDK Auth
         uses: google-github-actions/auth@v0
         with:
