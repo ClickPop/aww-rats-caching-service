@@ -48,6 +48,7 @@ BuildABI:
 	&& abigen --abi=./build/Closet.abi --bin=./build/Closet.bin --pkg=closet --out=./closet/closet.go
 
 BuildBinary:
+	CGO_ENABLED=0 \
 	GOOS=linux \
 	GOARCH=amd64 \
 	go build -o exec/caching-service -a
