@@ -6,7 +6,7 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"strings"
+	"time"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/closet"
@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/go-co-op/gocron"
 )
 
 func initialize() {
@@ -30,9 +31,17 @@ func main() {
 	client := blockchain.EthClient
 
 	if len(os.Args) > 1 && os.Args[1] == "historical" {
-		historical.Query()
+		shouldSync := false
+		if len(os.Args) > 2 && os.Args[2] == "sync" {
+			shouldSync = true
+		}
+		historical.Query(shouldSync)
 		return
 	}
+
+	s := gocron.NewScheduler(time.UTC)
+	s.Every(10).Minutes().Do(historical.Query, true)
+	s.StartAsync()
 
 	headers := make(chan *types.Header)
 
@@ -155,12 +164,13 @@ func main() {
 								log.Println(err)
 								continue
 							}
-							meta, err := tokens.GetRatMeta(strings.Replace(uri, "ipfs://", "http://ipfs.io/ipfs/", 1))
+							meta, err := tokens.GetRatMeta(uri)
 							if err != nil {
 								log.Println(err)
 								continue
 							}
 							token := tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: owner, URI: uri}, OpenseaMeta: meta}}
+							log.Println("Set Rat URI", id, owner, uri, meta)
 							rats = append(rats, token)
 						}
 					}

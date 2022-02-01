@@ -4,3 +4,4 @@ build/
 exec/
 .cache/
 .secrets.env
+.DS_Store
