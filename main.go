@@ -40,7 +40,7 @@ func main() {
 	}
 
 	s := gocron.NewScheduler(time.UTC)
-	s.Every(10).Minutes().Do(historical.Query, true)
+	s.Every(1).Hour().Do(historical.Query, true)
 	s.StartAsync()
 
 	headers := make(chan *types.Header)
