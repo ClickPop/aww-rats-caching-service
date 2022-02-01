@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/env"
@@ -18,11 +17,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func Query() {
+func Query(shouldSync bool) {
 	rats := loadRats()
 	pieces := loadClosetPieces()
 	transfers := loadClosetTokens()
-	if len(os.Args) > 2 && os.Args[2] == "sync" {
+	if shouldSync {
 		hasura.CallHasura(rats, pieces, transfers)
 	}
 }
@@ -86,7 +85,7 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 		if v.Attributes != nil {
 			continue
 		}
-		meta, err := tokens.GetRatMeta(strings.Replace(v.URI, "ipfs://", "http://ipfs.io/ipfs/", 1))
+		meta, err := tokens.GetRatMeta(v.URI)
 		if err != nil {
 			log.Fatal(err)
 		}

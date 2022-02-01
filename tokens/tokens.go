@@ -65,7 +65,8 @@ type ClosetTransfer struct {
 }
 
 func GetRatMeta(uri string) (OpenseaMeta, error) {
-	resp, err := http.Get(uri)
+	url := strings.Replace(uri, "ipfs://", "https://gateway.pinata.cloud/ipfs/", 1)
+	resp, err := http.Get(url)
 	if err != nil {
 		return OpenseaMeta{}, nil
 	}
