@@ -6,6 +6,9 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
@@ -18,7 +21,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/go-co-op/gocron"
 )
 
 func initialize() {
@@ -39,10 +41,6 @@ func main() {
 		return
 	}
 
-	s := gocron.NewScheduler(time.UTC)
-	s.Every(1).Hour().Do(historical.Query, true)
-	s.StartAsync()
-
 	headers := make(chan *types.Header)
 
 	sub, err := client.SubscribeNewHead(context.Background(), headers)
@@ -55,6 +53,15 @@ func main() {
 	for {
 		select {
 		case err := <-sub.Err():
+			if strings.Contains(err.Error(), "429") {
+				reg := regexp.MustCompile(`(?m)\d+(?: seconds)`)
+				seconds, err := strconv.Atoi(reg.FindString(err.Error()))
+				if err != nil {
+					log.Fatal("No timeout", err)
+				}
+				time.Sleep(time.Duration(seconds))
+				main()
+			}
 			log.Fatal("sub error: ", err)
 		case header := <-headers:
 			hash := header.Hash()
