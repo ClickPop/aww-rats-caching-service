@@ -9,6 +9,9 @@ on:
 jobs:
   buildAndDeploy:
     runs-on: "ubuntu-latest"
+    env:
+      HASURA_ADMIN_SECRET: ${{ secrets.HASURA_ADMIN_SECRET }}
+      HASURA_ENDPOINT: ${{ secrets.HASURA_ENDPOINT }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -18,6 +21,8 @@ jobs:
           go-version: 1.17
       - name: Setup Node runtime
         uses: actions/setup-node@v2
+        with:
+          version: 12
       - name: Setup PNPM
         uses: pnpm/action-setup@v2.0.1
         with:
@@ -32,8 +37,6 @@ jobs:
         run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
       - name: Add gcloud cred helper
         run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
-      - name: Setup Hasura Env
-        run: export HASURA_ADMIN_SECRET=${{ secrets.HASURA_ADMIN_SECRET }} && export HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }}
       - name: Make
         run: make all  
       - run: sudo chmod 777 exec/caching-service
