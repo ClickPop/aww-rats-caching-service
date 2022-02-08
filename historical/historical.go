@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"log"
 	"math/big"
-	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
+	"github.com/clickpop/aww-rats-caching-service/cmd"
 	"github.com/clickpop/aww-rats-caching-service/env"
 	"github.com/clickpop/aww-rats-caching-service/hasura"
 	"github.com/clickpop/aww-rats-caching-service/tokens"
@@ -17,20 +17,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func Query(shouldSync bool) {
-	rats := loadRats()
-	pieces := loadClosetPieces()
-	transfers := loadClosetTokens()
-	if shouldSync {
-		hasura.CallHasura(rats, pieces, transfers)
+func Query() {
+	if cmd.CurrCommand.Rats {
+		loadRats()
+	}
+	if cmd.CurrCommand.ClosetPieces {
+		loadClosetPieces()
+	}
+	if cmd.CurrCommand.ClosetTokens {
+		loadClosetTokens()
 	}
 }
 
-func addApiKey(req *http.Request) {
-	req.Header.Add("authorization", "test")
-}
-
-func loadRats() []tokens.RatTokenWithMetaAndId {
+func loadRats() {
 	numRats, err := blockchain.RatContract.NumTokens(blockchain.Opts)
 	if err != nil {
 		log.Println(err)
@@ -49,12 +48,17 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 			log.Fatal(err)
 		}
 	}
-	cacheFile, err := os.ReadFile("./.cache/ratTokens.json")
-	if err != nil {
-		log.Fatal(err)
+	if !cmd.CurrCommand.IgnoreCache {
+		cacheFile, err := os.ReadFile("./.cache/ratTokens.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		json.Unmarshal(cacheFile, &rats)
 	}
-	json.Unmarshal(cacheFile, &rats)
 	for i := 100; i < int(numRats.Int64()+100); i++ {
+		if rats[i].Owner != common.BigToAddress(big.NewInt(0)) || rats[i].Name != "Rat Egg" && rats[i].Name != "" {
+			continue
+		}
 		uri, err := blockchain.RatContract.TokenURI(blockchain.Opts, big.NewInt(int64(i)))
 		if err != nil {
 			log.Fatal(i, err)
@@ -67,11 +71,11 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 		}
 		rats[i] = tokens.RatTokenWithMeta{RatToken: currToken, OpenseaMeta: meta}
 		ratJSON, err := json.MarshalIndent(rats, "", "  ")
+		if err != nil {
+			log.Fatal("error marshaling rats to cache file", err)
+		}
 		ratTokensFile.Truncate(0)
 		ratTokensFile.WriteAt(ratJSON, 0)
-		if err != nil {
-			log.Fatal(err)
-		}
 		log.Println("Loaded token:", i)
 	}
 	sum := 0
@@ -91,11 +95,11 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 		}
 		rats[k] = tokens.RatTokenWithMeta{RatToken: rats[k].RatToken, OpenseaMeta: meta}
 		ratJSON, err := json.MarshalIndent(rats, "", "  ")
+		if err != nil {
+			log.Fatal("error marshaling rats with meta to cache file", err)
+		}
 		ratTokensFile.Truncate(0)
 		ratTokensFile.WriteAt(ratJSON, 0)
-		if err != nil {
-			log.Fatal(err)
-		}
 		log.Println("Loaded meta for token:", k)
 	}
 
@@ -104,10 +108,13 @@ func loadRats() []tokens.RatTokenWithMetaAndId {
 	for id, rat := range rats {
 		ratsWithIds = append(ratsWithIds, tokens.RatTokenWithMetaAndId{Id: big.NewInt(int64(id)), RatTokenWithMeta: rat})
 	}
-	return ratsWithIds
+
+	if cmd.CurrCommand.Sync {
+		hasura.UpsertRats(ratsWithIds)
+	}
 }
 
-func loadClosetPieces() []tokens.ClosetTokenWithMetaAndId {
+func loadClosetPieces() {
 	var closetTokenMap = map[string]tokens.ClosetTokenWithMeta{}
 	closetTokensFile, err := os.OpenFile("./.cache/closetTokens.json", os.O_WRONLY, os.ModeAppend)
 	if err != nil {
@@ -122,11 +129,13 @@ func loadClosetPieces() []tokens.ClosetTokenWithMetaAndId {
 			log.Fatal(err)
 		}
 	}
-	cacheFile, err := os.ReadFile("./.cache/closetTokens.json")
-	if err != nil {
-		log.Fatal(err)
+	if !cmd.CurrCommand.IgnoreCache {
+		cacheFile, err := os.ReadFile("./.cache/closetTokens.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		json.Unmarshal(cacheFile, &closetTokenMap)
 	}
-	json.Unmarshal(cacheFile, &closetTokenMap)
 	if len(closetTokenMap) == 0 {
 		closetTokens, err := blockchain.ClosetContract.GetAllTokens(blockchain.Opts)
 		if err != nil {
@@ -159,10 +168,13 @@ func loadClosetPieces() []tokens.ClosetTokenWithMetaAndId {
 		newId, _ := strconv.Atoi(id)
 		piecesWithIds = append(piecesWithIds, tokens.ClosetTokenWithMetaAndId{Id: big.NewInt(int64(newId)), ClosetTokenWithMeta: piece})
 	}
-	return piecesWithIds
+
+	if cmd.CurrCommand.Sync {
+		hasura.UpsertClosetPieces(piecesWithIds)
+	}
 }
 
-func loadClosetTokens() []tokens.ClosetTransfer {
+func loadClosetTokens() {
 	lastBlock, err := blockchain.EthClient.BlockNumber(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -182,11 +194,13 @@ func loadClosetTokens() []tokens.ClosetTransfer {
 			log.Fatal(err)
 		}
 	}
-	cacheFile, err := os.ReadFile("./.cache/closetTransactions.json")
-	if err != nil {
-		log.Fatal(err)
+	if !cmd.CurrCommand.IgnoreCache {
+		cacheFile, err := os.ReadFile("./.cache/closetTransactions.json")
+		if err != nil {
+			log.Fatal(err)
+		}
+		json.Unmarshal(cacheFile, &closetTransactions)
 	}
-	json.Unmarshal(cacheFile, &closetTransactions)
 	if closetTransactions.Block == nil {
 		closetTransactions.Block = big.NewInt(22075111)
 	}
@@ -268,5 +282,8 @@ func loadClosetTokens() []tokens.ClosetTransfer {
 	for _, v := range closetTransactions.Transfers {
 		transferArr = append(transferArr, v)
 	}
-	return transferArr
+
+	if cmd.CurrCommand.Sync {
+		hasura.UpsertClosetTokens(transferArr)
+	}
 }

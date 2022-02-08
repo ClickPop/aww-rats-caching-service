@@ -1,0 +1,12 @@
+mutation UpsertClosetTokens($tokens: [closet_tokens_insert_input!]!) {
+  insert_closet_tokens(
+    objects: $tokens
+    on_conflict: { constraint: closet_tokens_pkey, update_columns: amount }
+  ) {
+    returning {
+      token_id
+      owner
+      amount
+    }
+  }
+}

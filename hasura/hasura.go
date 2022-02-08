@@ -1,7 +1,7 @@
 package hasura
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"log"
 	"math/big"
@@ -9,172 +9,175 @@ import (
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/env"
+	GraphQL "github.com/clickpop/aww-rats-caching-service/schema/client"
+	generated "github.com/clickpop/aww-rats-caching-service/schema/models"
 	"github.com/clickpop/aww-rats-caching-service/tokens"
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type RatInput struct {
-	Id          *big.Int       `json:"id,omitempty"`
-	Owner       common.Address `json:"owner,omitempty"`
-	Name        string         `json:"name,omitempty"`
-	Image       string         `json:"image,omitempty"`
-	Description string         `json:"description,omitempty"`
-	Accessory   string         `json:"accessory,omitempty"`
-	Background  string         `json:"background,omitempty"`
-	Color       string         `json:"color,omitempty"`
-	Ears        string         `json:"ears,omitempty"`
-	Eyes        string         `json:"eyes,omitempty"`
-	Generation  string         `json:"generation,omitempty"`
-	Glasses     string         `json:"glasses,omitempty"`
-	Hand        string         `json:"hand,omitempty"`
-	Hat         string         `json:"hat,omitempty"`
-	Head        string         `json:"head,omitempty"`
-	Markings    string         `json:"markings,omitempty"`
-	Pet         string         `json:"pet,omitempty"`
-	Shirt       string         `json:"shirt,omitempty"`
-	Snout       string         `json:"snout,omitempty"`
-	Tail        string         `json:"tail,omitempty"`
-	Torso       string         `json:"torso,omitempty"`
-	Cunning     float64        `json:"cunning,omitempty"`
-	Cuteness    float64        `json:"cuteness,omitempty"`
-	Rattitude   float64        `json:"rattitude,omitempty"`
-}
+type RatInput = generated.RatsInsertInput
 
-type ClosetPieceInput struct {
-	Id              *big.Int    `json:"id,omitempty"`
-	Name            string      `json:"name,omitempty"`
-	Image           string      `json:"image,omitempty"`
-	Description     string      `json:"description,omitempty"`
-	Cost            *big.Int    `json:"cost,omitempty"`
-	MaxTokens       *big.Int    `json:"max_tokens,omitempty"`
-	MaxPerWallet    *big.Int    `json:"max_per_wallet,omitempty"`
-	Active          bool        `json:"active,omitempty"`
-	RevShareAddress string      `json:"rev_share_address,omitempty"`
-	RevShareAmount  [2]*big.Int `json:"rev_share_amount,omitempty"`
-	PieceType       string      `json:"piece_type,omitempty"`
-	Collection      string      `json:"collection,omitempty"`
-	Sponsor         string      `json:"sponsor,omitempty"`
-	SponsorURL      string      `json:"sponsor_url,omitempty"`
-	Cunning         float64     `json:"cunning,omitempty"`
-	Cuteness        float64     `json:"cuteness,omitempty"`
-	Rattitude       float64     `json:"rattitude,omitempty"`
-}
+type ClosetPieceInput = generated.ClosetPiecesInsertInput
 
-type ClosetTokenInput struct {
-	TokenId *big.Int       `json:"token_id,omitempty"`
-	Owner   common.Address `json:"owner,omitempty"`
-	Amount  *big.Int       `json:"amount,omitempty"`
-}
+type ClosetTokenInput = generated.ClosetTokensInsertInput
 
-type Body struct {
-	Rats         []RatInput         `json:"rats"`
-	ClosetPieces []ClosetPieceInput `json:"closet_pieces"`
-	ClosetTokens []ClosetTokenInput `json:"closet_tokens"`
-}
-
-func CallHasura(rats []tokens.RatTokenWithMetaAndId, pieces []tokens.ClosetTokenWithMetaAndId, transfers []tokens.ClosetTransfer) {
-	parsedRats := make([]RatInput, 0)
+func UpsertRats(rats []tokens.RatTokenWithMetaAndId) {
+	parsedRats := make([]*RatInput, 0)
 	for _, rat := range rats {
 		parsedRats = append(parsedRats, parseRat(rat))
 	}
-	parsedPieces := make([]ClosetPieceInput, 0)
+	if len(parsedRats) > 0 {
+		graphQLClient := GetGraphQLClient()
+		upsertedRats, err := graphQLClient.UpsertRats(context.Background(), parsedRats)
+		if err != nil {
+			log.Println("error upserting rats", err)
+		}
+		log.Printf("Upserted %d rats", len(upsertedRats.InsertRats.Returning))
+	}
+}
+
+func UpsertClosetPieces(pieces []tokens.ClosetTokenWithMetaAndId) {
+	parsedPieces := make([]*ClosetPieceInput, 0)
 	for _, piece := range pieces {
 		parsedPieces = append(parsedPieces, parseClosetPiece(piece))
 	}
-
-	tokens := handleClosetTransfers(transfers)
-	body := Body{Rats: parsedRats, ClosetPieces: parsedPieces, ClosetTokens: tokens}
-	bodyData, err := json.Marshal(body)
-	if err != nil {
-		log.Println(err)
+	if len(parsedPieces) > 0 {
+		graphQLClient := GetGraphQLClient()
+		upsertedPieces, err := graphQLClient.UpsertClosetPieces(context.Background(), parsedPieces)
+		if err != nil {
+			log.Println("error upserting pieces", err)
+		}
+		log.Printf("Upserted %d closet pieces", len(upsertedPieces.InsertClosetPieces.Returning))
 	}
-	bodyReader := bytes.NewReader(bodyData)
-	req, err := http.NewRequest(http.MethodPost, env.ENDPOINT_URL, bodyReader)
-	if err != nil {
-		log.Println("error: ", err)
-	}
-	req.Header.Add("authorization", env.HASURA_API_KEY)
-	req.Header.Add("content-type", "application/json")
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println(res.Status)
-	res.Body.Close()
 }
 
-func parseRat(rat tokens.RatTokenWithMetaAndId) RatInput {
-	parsedRat := RatInput{Id: rat.Id, Owner: rat.Owner, Name: rat.Name, Description: rat.Description, Image: rat.Image}
+func UpsertClosetTokens(transfers []tokens.ClosetTransfer) {
+	tokens := handleClosetTransfers(transfers)
+	if len(tokens) > 0 {
+		graphQLClient := GetGraphQLClient()
+		upsertedTokens, err := graphQLClient.UpsertClosetTokens(context.Background(), tokens)
+		if err != nil {
+			log.Println("error upserting pieces", err)
+		}
+		log.Printf("Upserted %d closet tokens", len(upsertedTokens.InsertClosetTokens.Returning))
+	}
+}
+
+func CallHasura(rats []tokens.RatTokenWithMetaAndId, pieces []tokens.ClosetTokenWithMetaAndId, transfers []tokens.ClosetTransfer) {
+	UpsertRats(rats)
+	UpsertClosetPieces(pieces)
+	UpsertClosetTokens(transfers)
+}
+
+func parseRat(rat tokens.RatTokenWithMetaAndId) *RatInput {
+	owner := rat.Owner.Hex()
+	baseState := 0
+	parsedRat := RatInput{ID: rat.Id, Owner: &owner, Name: &rat.Name, Description: &rat.Description, Image: &rat.Image, Rattitude: &baseState, Cunning: &baseState, Cuteness: &baseState}
 	for _, v := range rat.OpenseaMeta.Attributes {
 		switch v.TraitType {
 		case "Accessory":
-			parsedRat.Accessory = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Accessory = &val
 		case "Background":
-			parsedRat.Background = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Background = &val
 		case "Color":
-			parsedRat.Color = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Color = &val
 		case "Ears":
-			parsedRat.Ears = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Ears = &val
 		case "Eyes":
-			parsedRat.Eyes = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Eyes = &val
 		case "Generation":
-			parsedRat.Generation = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Generation = &val
 		case "Glasses":
-			parsedRat.Glasses = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Glasses = &val
 		case "Hand":
-			parsedRat.Hand = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Hand = &val
 		case "Hat":
-			parsedRat.Hat = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Hat = &val
 		case "Head":
-			parsedRat.Head = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Head = &val
 		case "Markings":
-			parsedRat.Markings = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Markings = &val
 		case "Pet":
-			parsedRat.Pet = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Pet = &val
 		case "Shirt":
-			parsedRat.Shirt = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Shirt = &val
 		case "Snout":
-			parsedRat.Snout = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Snout = &val
 		case "Tail":
-			parsedRat.Tail = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Tail = &val
 		case "Torso":
-			parsedRat.Torso = v.Value.(string)
+			val := v.Value.(string)
+			parsedRat.Torso = &val
+		case "Type":
+			val := v.Value.(string)
+			parsedRat.Type = &val
 		case "Cunning":
-			parsedRat.Cunning = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedRat.Cunning = &val
 		case "Rattitude":
-			parsedRat.Rattitude = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedRat.Rattitude = &val
 		case "Cuteness":
-			parsedRat.Cuteness = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedRat.Cuteness = &val
 		}
 	}
-	return parsedRat
+	return &parsedRat
 }
 
-func parseClosetPiece(piece tokens.ClosetTokenWithMetaAndId) ClosetPieceInput {
-	parsedPiece := ClosetPieceInput{Id: piece.Id, Name: piece.OpenseaMeta.Name, Description: piece.Description, Image: piece.Image, Cost: piece.Cost, MaxTokens: piece.MaxTokens, MaxPerWallet: piece.MaxPerWallet, RevShareAddress: piece.RevShareAddress.Hex(), RevShareAmount: piece.RevShareAmount, Active: piece.Active}
+func parseClosetPiece(piece tokens.ClosetTokenWithMetaAndId) *ClosetPieceInput {
+	revShareAddress := piece.RevShareAddress.Hex()
+	revShareBytes, err := json.Marshal(piece.RevShareAmount)
+	if err != nil {
+		log.Fatal("cannot marshal closet piece rev share", err)
+	}
+	revShareParsed := string(revShareBytes)
+	parsedPiece := ClosetPieceInput{ID: piece.Id, Name: &piece.OpenseaMeta.Name, Description: &piece.Description, Image: &piece.Image, Cost: piece.Cost, MaxTokens: piece.MaxTokens, MaxPerWallet: piece.MaxPerWallet, RevShareAddress: &revShareAddress, RevShareAmount: &revShareParsed, Active: &piece.Active}
 	for _, v := range piece.OpenseaMeta.Attributes {
 		switch v.TraitType {
 		case "Collection":
-			parsedPiece.Collection = v.Value.(string)
+			val := v.Value.(string)
+			parsedPiece.Collection = &val
 		case "Piece Type":
-			parsedPiece.PieceType = v.Value.(string)
+			val := v.Value.(string)
+			parsedPiece.PieceType = &val
 		case "Sponsor":
-			parsedPiece.Sponsor = v.Value.(string)
+			val := v.Value.(string)
+			parsedPiece.Sponsor = &val
 		case "Sponsor URL":
-			parsedPiece.SponsorURL = v.Value.(string)
+			val := v.Value.(string)
+			parsedPiece.SponsorURL = &val
 		case "Cunning":
-			parsedPiece.Cunning = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedPiece.Cunning = &val
 		case "Rattitude":
-			parsedPiece.Rattitude = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedPiece.Rattitude = &val
 		case "Cuteness":
-			parsedPiece.Cuteness = v.Value.(float64)
+			val := int(v.Value.(float64))
+			parsedPiece.Cuteness = &val
 		}
 	}
-	return parsedPiece
+	return &parsedPiece
 }
 
-func handleClosetTransfers(txs []tokens.ClosetTransfer) []ClosetTokenInput {
-	changes := make([]ClosetTokenInput, 0)
+func handleClosetTransfers(txs []tokens.ClosetTransfer) []*ClosetTokenInput {
+	changes := make([]*ClosetTokenInput, 0)
 	addrToIdListMap := make(map[common.Hash][]*big.Int)
 	closet := blockchain.ClosetContract
 	opts := blockchain.Opts
@@ -228,10 +231,19 @@ func handleClosetTransfers(txs []tokens.ClosetTransfer) []ClosetTokenInput {
 			log.Println("error: ", err)
 		}
 		for i, bal := range bals {
-			token := ClosetTokenInput{TokenId: tokensArr[i], Owner: common.BytesToAddress(addr.Bytes()), Amount: bal}
-			changes = append(changes, token)
+			address := common.BytesToAddress(addr.Bytes()).Hex()
+			token := ClosetTokenInput{TokenID: tokensArr[i], Owner: &address, Amount: bal}
+			changes = append(changes, &token)
 		}
 	}
 
 	return changes
+}
+
+func GetGraphQLClient() *GraphQL.Client {
+	return GraphQL.NewClient(http.DefaultClient, env.HASURA_ENDPOINT, addHeader)
+}
+
+func addHeader(req *http.Request) {
+	req.Header.Add("X-Hasura-Admin-Secret", env.HASURA_ADMIN_SECRET)
 }

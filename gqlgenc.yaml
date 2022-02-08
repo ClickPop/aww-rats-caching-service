@@ -1,0 +1,15 @@
+model:
+  package: generated
+  filename: ./schema/models/models_gen.go # https://github.com/99designs/gqlgen/tree/master/plugin/modelgen
+models:
+  bigint:
+    model: "math/big.Int"
+client:
+  package: generated
+  filename: ./schema/client/client.go # Where should any generated client go?
+endpoint:
+  url: "${HASURA_ENDPOINT}" # Where do you want to send your request?
+  headers: # If you need header for getting introspection query, set it
+    X-Hasura-Admin-Secret: "${HASURA_ADMIN_SECRET}" # support environment variables
+query:
+  - "./schema/**/*.gql" # Where are all the query files located?

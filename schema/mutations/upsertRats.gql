@@ -1,0 +1,38 @@
+mutation UpsertRats($rats: [rats_insert_input!]!) {
+  insert_rats(
+    objects: $rats
+    on_conflict: {
+      constraint: rats_pkey
+      update_columns: [
+        accessory
+        background
+        color
+        cunning
+        cuteness
+        description
+        ears
+        eyes
+        generation
+        glasses
+        hand
+        hat
+        head
+        image
+        name
+        owner
+        pet
+        rattitude
+        shirt
+        snout
+        tail
+        torso
+        type
+      ]
+    }
+  ) {
+    returning {
+      id
+      owner
+    }
+  }
+}

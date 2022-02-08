@@ -15,13 +15,15 @@ ifeq ($(shell go env GOOS),linux)
 endif
 
 
-all: InstallSolc InstallProtoc InstallDeps BuildABIGEN GetContract Compile BuildABI BuildBinary
+all: InstallSolc InstallProtoc InstallDeps  BuildABIGEN GetContract Compile BuildABI BuildBinary
 
 contract: GetContract Compile BuildABI
 
 build: BuildBinary
 
 docker: BuildBinary DockerBuild
+
+graphql: GraphQLDeps GraphQLCodegen
 
 InstallDeps: 
 	go get && pnpm install
@@ -55,3 +57,10 @@ BuildBinary:
 
 DockerBuild:
 	docker build -t aww-rats-caching-service . --platform linux/amd64
+
+GraphQLDeps:
+	go get -u -d github.com/Yamashou/gqlgenc@v0.0.1 \
+	&& go install github.com/Yamashou/gqlgenc@v0.0.1
+
+GraphQLCodegen:
+	gqlgenc
