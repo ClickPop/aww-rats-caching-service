@@ -15,7 +15,7 @@ ifeq ($(shell go env GOOS),linux)
 endif
 
 
-all: InstallSolc InstallProtoc InstallDeps  BuildABIGEN GetContract Compile BuildABI BuildBinary
+all: InstallSolc InstallProtoc GraphQLDeps GraphQLCodegen InstallDeps BuildABIGEN GetContract Compile BuildABI BuildBinary
 
 contract: GetContract Compile BuildABI
 
