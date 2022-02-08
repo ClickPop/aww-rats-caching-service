@@ -32,6 +32,8 @@ jobs:
         run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
       - name: Add gcloud cred helper
         run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
+      - name: Setup Hasura Env
+        run: export HASURA_ADMIN_SECRET=${{ secrets.HASURA_ADMIN_SECRET }} && export HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }}
       - name: Make
         run: make all  
       - run: sudo chmod 777 exec/caching-service
