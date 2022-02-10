@@ -1,0 +1,30 @@
+mutation UpsertClosetPieces($pieces: [closet_pieces_insert_input!]!) {
+  insert_closet_pieces(
+    objects: $pieces
+    on_conflict: {
+      constraint: closet_pieces_pkey
+      update_columns: [
+        active
+        collection
+        cost
+        cunning
+        cuteness
+        description
+        image
+        max_per_wallet
+        max_tokens
+        name
+        piece_type
+        rattitude
+        rev_share_address
+        rev_share_amount
+        sponsor
+        sponsor_url
+      ]
+    }
+  ) {
+    returning {
+      id
+    }
+  }
+}

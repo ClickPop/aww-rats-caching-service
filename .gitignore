@@ -5,3 +5,4 @@ exec/
 .cache/
 .secrets.env
 .DS_Store
+schema/**/*.go

@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/closet"
@@ -67,7 +68,11 @@ type ClosetTransfer struct {
 func GetRatMeta(uri string) (OpenseaMeta, error) {
 	url := strings.Replace(uri, "ipfs://", "https://gateway.pinata.cloud/ipfs/", 1)
 	resp, err := http.Get(url)
-	if err != nil {
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if resp.StatusCode == 429 {
+			time.Sleep(time.Second * 5)
+			return GetRatMeta(uri)
+		}
 		return OpenseaMeta{}, nil
 	}
 	bodyData, err := ioutil.ReadAll(resp.Body)
@@ -84,8 +89,12 @@ func GetRatMeta(uri string) (OpenseaMeta, error) {
 
 func GetClosetMeta(id *big.Int) (OpenseaMeta, error) {
 	resp, err := http.Get(strings.Replace(blockchain.ClosetTokenURI, "{id}", fmt.Sprintf("%s", id.String()), 1))
-	if err != nil {
-		return OpenseaMeta{}, err
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if resp.StatusCode == 429 {
+			time.Sleep(time.Second * 5)
+			return GetClosetMeta(id)
+		}
+		return OpenseaMeta{}, nil
 	}
 	bodyData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
