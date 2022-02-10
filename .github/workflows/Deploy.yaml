@@ -13,7 +13,7 @@ jobs:
       HASURA_SECRET: "${{ secrets.HASURA_SECRET }}"
       HASURA_ENDPOINT: "${{ secrets.HASURA_ENDPOINT }}"
     steps:
-      - run: env | grep HASURA
+      - run: echo "${{ secrets.HASURA_SECRET }}"
       # - name: Checkout repo
       #   uses: actions/checkout@v2
       # - name: Setup Go  
