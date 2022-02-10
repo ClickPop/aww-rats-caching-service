@@ -1,6 +1,6 @@
 name: "Build and Deploy"
 
-on: 
+on:
   push:
     branches:
       - "main"
@@ -9,59 +9,65 @@ on:
 jobs:
   buildAndDeploy:
     runs-on: "ubuntu-latest"
-    env:
-      HASURA_SECRET: "${{ secrets.HASURA_SECRET }}"
-      HASURA_ENDPOINT: "${{ secrets.HASURA_ENDPOINT }}"
     steps:
-      - run: echo "${{ secrets.HASURA_SECRET }}"
-      # - name: Checkout repo
-      #   uses: actions/checkout@v2
-      # - name: Setup Go  
-      #   uses: actions/setup-go@v2
-      #   with:
-      #     go-version: 1.17
-      # - name: Setup Node runtime
-      #   uses: actions/setup-node@v2
-      #   with:
-      #     version: 12
-      # - name: Setup PNPM
-      #   uses: pnpm/action-setup@v2.0.1
-      #   with:
-      #     version: 6.24.2
-      # - name: Set up Cloud SDK
-      #   uses: google-github-actions/setup-gcloud@v0
-      # - name: Setup Cloud SDK Auth
-      #   uses: google-github-actions/auth@v0
-      #   with:
-      #     credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-      # - name: Login to Docker
-      #   run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
-      # - name: Add gcloud cred helper
-      #   run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
-      # - name: Make
-      #   run: make all
-      # - run: sudo chmod 777 exec/caching-service
-      # - name: Build Dev Docker Image
-      #   if: ${{contains(github.ref, 'development')}}
-      #   run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev . --platform linux/amd64
-      # - name: Build Prod Docker Image
-      #   if: ${{contains(github.ref, 'main')}}
-      #   run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache . --platform linux/amd64
-      # - name: Push Dev Docker Image
-      #   if: ${{contains(github.ref, 'development')}}
-      #   run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev
-      # - name: Push Prod Docker Image
-      #   if: ${{contains(github.ref, 'main')}}
-      #   run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache
-      # - name: Update Dev Instance
-      #   if: ${{contains(github.ref, 'development')}}
-      #   run: gcloud compute instances update-container caching-service-dev --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }}
-      # - name: Update Prod Instance
-      #   if: ${{contains(github.ref, 'main')}}
-      #   run: gcloud compute instances update-container caching-service --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }}
-      # - name: Prune Dev Instance
-      #   if: ${{contains(github.ref, 'development')}}
-      #   run: gcloud compute ssh caching-service-dev --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
-      # - name: Prune Prod Instance
-      #   if: ${{contains(github.ref, 'main')}}
-      #   run: gcloud compute ssh caching-service --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Setup Go  
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+      - name: Setup Node runtime
+        uses: actions/setup-node@v2
+        with:
+          version: 12
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 6.24.2
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0
+      - name: Setup Cloud SDK Auth
+        uses: google-github-actions/auth@v0
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+      - name: Login to Docker
+        run: echo ${{ secrets.GCP_BASE64_CREDENTIALS }} | docker login -u _json_key_base64 --password-stdin https://us-east1-docker.pkg.dev
+      - name: Add gcloud cred helper
+        run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
+      - name: Make
+        if: ${{contains(github.ref, 'development')}}
+        run: make all
+        env:
+          HASURA_SECRET: "${{ secrets.HASURA_SECRET_DEV }}"
+          HASURA_ENDPOINT: "${{ secrets.HASURA_ENDPOINT_DEV }}"
+      - name: Make
+        if: ${{contains(github.ref, 'main')}}
+        run: make all
+        env:
+          HASURA_SECRET: "${{ secrets.HASURA_SECRET }}"
+          HASURA_ENDPOINT: "${{ secrets.HASURA_ENDPOINT }}"
+      - run: sudo chmod 777 exec/caching-service
+      - name: Build Dev Docker Image
+        if: ${{contains(github.ref, 'development')}}
+        run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev . --platform linux/amd64
+      - name: Build Prod Docker Image
+        if: ${{contains(github.ref, 'main')}}
+        run: docker build -t northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache . --platform linux/amd64
+      - name: Push Dev Docker Image
+        if: ${{contains(github.ref, 'development')}}
+        run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev
+      - name: Push Prod Docker Image
+        if: ${{contains(github.ref, 'main')}}
+        run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache
+      - name: Update Dev Instance
+        if: ${{contains(github.ref, 'development')}}
+        run: gcloud compute instances update-container caching-service-dev --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET_DEV }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT_DEV }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT_DEV }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }}
+      - name: Update Prod Instance
+        if: ${{contains(github.ref, 'main')}}
+        run: gcloud compute instances update-container caching-service --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }}
+      - name: Prune Dev Instance
+        if: ${{contains(github.ref, 'development')}}
+        run: gcloud compute ssh caching-service-dev --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
+      - name: Prune Prod Instance
+        if: ${{contains(github.ref, 'main')}}
+        run: gcloud compute ssh caching-service --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
