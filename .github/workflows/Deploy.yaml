@@ -10,8 +10,8 @@ jobs:
   buildAndDeploy:
     runs-on: "ubuntu-latest"
     env:
-      HASURA_SECRET: ${{ secrets.HASURA_SECRET }}
-      HASURA_ENDPOINT: ${{ secrets.HASURA_ENDPOINT }}
+      HASURA_SECRET: "${{ secrets.HASURA_SECRET }}"
+      HASURA_ENDPOINT: "${{ secrets.HASURA_ENDPOINT }}"
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -38,7 +38,7 @@ jobs:
       - name: Add gcloud cred helper
         run: gcloud auth configure-docker northamerica-northeast2-docker.pkg.dev
       - name: Make
-        run: make all  
+        run: make all
       - run: sudo chmod 777 exec/caching-service
       - name: Build Dev Docker Image
         if: ${{contains(github.ref, 'development')}}

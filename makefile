@@ -59,8 +59,8 @@ DockerBuild:
 	docker build -t aww-rats-caching-service . --platform linux/amd64
 
 GraphQLDeps:
-	go get -u -d github.com/Yamashou/gqlgenc@v0.0.1 \
-	&& go install github.com/Yamashou/gqlgenc@v0.0.1
+	go get -u -d github.com/Yamashou/gqlgenc@v0.0.2 \
+	&& go install github.com/Yamashou/gqlgenc@v0.0.2
 
 GraphQLCodegen:
 	gqlgenc

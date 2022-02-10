@@ -3,7 +3,7 @@ module github.com/clickpop/aww-rats-caching-service
 go 1.17
 
 require (
-	github.com/Yamashou/gqlgenc v0.0.1
+	github.com/Yamashou/gqlgenc v0.0.2
 	github.com/ethereum/go-ethereum v1.10.13
 	github.com/joho/godotenv v1.4.0
 )
@@ -26,7 +26,7 @@ require (
 	github.com/vektah/gqlparser/v2 v2.3.1 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/sys v0.0.0-20220207234003-57398862261d // indirect
+	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.9 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
