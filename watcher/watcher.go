@@ -71,7 +71,15 @@ func Watch() {
 						from := l.Topics[1]
 						to := l.Topics[2]
 						id := l.Topics[3].Big()
-						rats = append(rats, tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: common.BytesToAddress(to.Bytes())}}})
+						uri, err := blockchain.RatContract.TokenURI(&bind.CallOpts{Context: context.Background()}, id)
+						if err != nil {
+							log.Println(err)
+						}
+						meta, err := tokens.GetRatMeta(uri)
+						if err != nil {
+							log.Println(err)
+						}
+						rats = append(rats, tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: common.BytesToAddress(to.Bytes())}, OpenseaMeta: meta}})
 						log.Println("Rat transfer", from, to, id)
 					}
 				case env.CLOSET_ADDR:
