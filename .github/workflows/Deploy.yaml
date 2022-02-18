@@ -61,10 +61,10 @@ jobs:
         run: docker push northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache
       - name: Update Dev Instance
         if: ${{contains(github.ref, 'development')}}
-        run: gcloud compute instances update-container caching-service-dev --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev --container-env=^;^HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET_DEV }};HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT_DEV }};POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT_DEV }};RAT_ADDR=${{ secrets.RAT_ADDR }};CLOSET_ADDR=${{ secrets.CLOSET_ADDR }};GCLOUD_AUTH_JSON='${{ secrets.GCLOUD_AUTH_JSON }}';IGNORE_IMAGES="true"
+        run: gcloud compute instances update-container caching-service-dev --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache-dev --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET_DEV }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT_DEV }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT_DEV }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }},IGNORE_IMAGES="true"
       - name: Update Prod Instance
         if: ${{contains(github.ref, 'main')}}
-        run: gcloud compute instances update-container caching-service --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache --container-env=^;^HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET }};HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }};POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT }};RAT_ADDR=${{ secrets.RAT_ADDR }};CLOSET_ADDR=${{ secrets.CLOSET_ADDR }};GCLOUD_AUTH_JSON='${{ secrets.GCLOUD_AUTH_JSON }}'
+        run: gcloud compute instances update-container caching-service --zone=northamerica-northeast2-a --container-image=northamerica-northeast2-docker.pkg.dev/awwrats/caching-service/live-cache --container-env=HASURA_ADMIN_SECRET=${{ secrets.HASURA_SECRET }},HASURA_ENDPOINT=${{ secrets.HASURA_ENDPOINT }},POLYGON_ENDPOINT=${{ secrets.POLYGON_ENDPOINT }},RAT_ADDR=${{ secrets.RAT_ADDR }},CLOSET_ADDR=${{ secrets.CLOSET_ADDR }}
       - name: Prune Dev Instance
         if: ${{contains(github.ref, 'development')}}
         run: gcloud compute ssh caching-service-dev --zone=northamerica-northeast2-a --command 'docker system prune -f -a'
