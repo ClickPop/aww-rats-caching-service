@@ -2,15 +2,19 @@ package tokens
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
+	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/closet"
+	"github.com/clickpop/aww-rats-caching-service/gcloud"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -106,4 +110,50 @@ func GetClosetMeta(id *big.Int) (OpenseaMeta, error) {
 		return OpenseaMeta{}, err
 	}
 	return meta, nil
+}
+
+func getIpfsImage(uri string) ([]byte, error) {
+	url := strings.Replace(uri, "ipfs://", "https://gateway.pinata.cloud/ipfs/", 1)
+	resp, err := http.Get(url)
+	if err != nil || resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if resp.StatusCode == 429 {
+			time.Sleep(time.Second * 5)
+			return getIpfsImage(uri)
+		}
+		return []byte{}, err
+	}
+	bodyData, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return []byte{}, err
+	}
+	return bodyData, err
+}
+
+func StoreRat(rat RatTokenWithMetaAndId) error {
+	if os.Getenv("IGNORE_IMAGES") == "true" {
+		return nil
+	}
+	data, err := getIpfsImage(rat.Image)
+	if err != nil {
+		return err
+	}
+	gcloud.StoreFile(fmt.Sprintf("rats/cached-images/%s.png", rat.Id.String()), data)
+	return nil
+}
+
+func StoreClosetPiece(piece ClosetTokenWithMetaAndId) error {
+	if os.Getenv("IGNORE_IMAGES") == "true" {
+		return nil
+	}
+	data, err := getIpfsImage(piece.Image)
+	if err != nil {
+		return err
+	}
+	reg := regexp.MustCompile(`(?m)[^/]+\.png$`)
+	filename := reg.FindString(piece.Image)
+	if filename == "" {
+		return errors.New("cannot find filename in image url")
+	}
+	gcloud.StoreFile(fmt.Sprintf("closet/image-thumbnails/%s", filename), data)
+	return nil
 }

@@ -7,8 +7,7 @@ import (
 )
 
 type Command struct {
-	Watch        bool
-	Historical   bool
+	Cmd          string
 	Rats         bool
 	ClosetPieces bool
 	ClosetTokens bool
@@ -19,8 +18,8 @@ type Command struct {
 var CurrCommand Command
 
 func Init() {
-	if len(os.Args) < 1 {
-		log.Println()
+	if len(os.Args) < 2 {
+		log.Fatal("please provide a command")
 	}
 	args := os.Args[1:]
 	subCommands := make([]string, 0)
@@ -32,22 +31,8 @@ func Init() {
 			subCommands = append(subCommands, arg)
 		}
 	}
-	CurrCommand.CheckSubCommands(subCommands)
+	CurrCommand.Cmd = subCommands[0]
 	CurrCommand.CheckFlags(flags)
-	if CurrCommand.Historical && CurrCommand.Watch {
-		log.Fatal("please select either historical or watch")
-	}
-}
-
-func (c *Command) CheckSubCommands(subCommands []string) {
-	for _, subCommand := range subCommands {
-		switch subCommand {
-		case "historical":
-			CurrCommand.Historical = true
-		case "watch":
-			CurrCommand.Watch = true
-		}
-	}
 }
 
 func (c *Command) CheckFlags(flags []string) {
