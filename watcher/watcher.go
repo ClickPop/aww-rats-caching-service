@@ -101,6 +101,10 @@ func Watch() {
 						}
 						token := tokens.ClosetTokenWithMetaAndId{Id: event.TokenId, ClosetTokenWithMeta: tokens.ClosetTokenWithMeta{Token: event.Token, OpenseaMeta: meta}}
 						closetPieces = append(closetPieces, token)
+						err = tokens.StoreClosetPiece(token)
+						if err != nil {
+							log.Println("closet token image cache error", err)
+						}
 						log.Println("Closet piece added/changed", event)
 					case blockchain.ClosetABI.Events["TransferBatch"].ID.Hex():
 						event := struct {
@@ -167,6 +171,11 @@ func Watch() {
 								continue
 							}
 							token := tokens.RatTokenWithMetaAndId{Id: id, RatTokenWithMeta: tokens.RatTokenWithMeta{RatToken: tokens.RatToken{Owner: owner, URI: uri}, OpenseaMeta: meta}}
+							err = tokens.StoreRat(token)
+							if err != nil {
+								log.Println("rat token image cache error", err)
+								continue
+							}
 							log.Println("Set Rat URI", id, owner, uri, meta)
 							rats = append(rats, token)
 						}

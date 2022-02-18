@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/clickpop/aww-rats-caching-service/blockchain"
 	"github.com/clickpop/aww-rats-caching-service/cmd"
 	"github.com/clickpop/aww-rats-caching-service/env"
@@ -17,9 +19,12 @@ func initialize() {
 func main() {
 	initialize()
 
-	if cmd.CurrCommand.Watch {
+	switch {
+	case cmd.CurrCommand.Cmd == "watch":
 		watcher.Watch()
-	} else {
+	case cmd.CurrCommand.Cmd == "historical":
 		historical.Query()
+	default:
+		log.Fatal("please provide a command")
 	}
 }

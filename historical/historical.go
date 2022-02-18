@@ -110,6 +110,15 @@ func loadRats() {
 	}
 
 	if cmd.CurrCommand.Sync {
+		for _, v := range ratsWithIds {
+			if v.Image != "" {
+				err := tokens.StoreRat(v)
+				if err != nil {
+					log.Println("rat token image cache error", err)
+					continue
+				}
+			}
+		}
 		hasura.UpsertRats(ratsWithIds)
 	}
 }
@@ -167,6 +176,15 @@ func loadClosetPieces() {
 	for id, piece := range closetTokenMap {
 		newId, _ := strconv.Atoi(id)
 		piecesWithIds = append(piecesWithIds, tokens.ClosetTokenWithMetaAndId{Id: big.NewInt(int64(newId)), ClosetTokenWithMeta: piece})
+	}
+
+	for _, v := range piecesWithIds {
+		if v.Image != "" {
+			err := tokens.StoreClosetPiece(v)
+			if err != nil {
+				log.Println("closet token image cache error", err)
+			}
+		}
 	}
 
 	if cmd.CurrCommand.Sync {
