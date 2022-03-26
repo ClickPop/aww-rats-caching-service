@@ -3,10 +3,10 @@ package watcher
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"math/big"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func Watch() {
+func Watch(timeout int) {
 	client := blockchain.EthClient
 	headers := make(chan *types.Header)
 
@@ -35,17 +35,32 @@ func Watch() {
 	for {
 		select {
 		case err := <-sub.Err():
-			if strings.Contains(err.Error(), "429") {
+			switch {
+			case strings.Contains(err.Error(), "429"):
 				reg := regexp.MustCompile(`(?m)\d+(?: seconds)`)
-				seconds, err := strconv.Atoi(reg.FindString(err.Error()))
+				seconds, err := time.ParseDuration(fmt.Sprintf("%ss", reg.FindString(err.Error())))
 				if err != nil {
 					log.Fatal("no timeout found", err)
 				}
 				time.Sleep(time.Duration(seconds))
-				Watch()
+				Watch(0)
+			case strings.Contains(err.Error(), "refused"):
+				fallthrough
+			case strings.Contains(err.Error(), "1006"):
+				if timeout > 60 {
+					log.Fatalf("timeout exceeds maximum %d\n", timeout)
+				}
+				timeoutDuration, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
+				if err != nil {
+					log.Fatal("unable to parse timeout duration")
+				}
+				time.Sleep(timeoutDuration)
+				Watch(int(timeoutDuration.Seconds()) + 5)
 			}
+
 			log.Fatal("subscription error: ", err)
 		case header := <-headers:
+			timeout = 0
 			hash := header.Hash()
 			block, err := client.BlockByHash(context.Background(), hash)
 			if err != nil {
