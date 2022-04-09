@@ -3,10 +3,10 @@ package watcher
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"log"
 	"math/big"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -21,7 +21,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func Watch() {
+func Watch(timeout int) {
 	client := blockchain.EthClient
 	headers := make(chan *types.Header)
 
@@ -35,17 +35,32 @@ func Watch() {
 	for {
 		select {
 		case err := <-sub.Err():
-			if strings.Contains(err.Error(), "429") {
+			switch {
+			case strings.Contains(err.Error(), "429"):
 				reg := regexp.MustCompile(`(?m)\d+(?: seconds)`)
-				seconds, err := strconv.Atoi(reg.FindString(err.Error()))
+				seconds, err := time.ParseDuration(fmt.Sprintf("%ss", reg.FindString(err.Error())))
 				if err != nil {
 					log.Fatal("no timeout found", err)
 				}
 				time.Sleep(time.Duration(seconds))
-				Watch()
+				Watch(0)
+			case strings.Contains(err.Error(), "refused"):
+				fallthrough
+			case strings.Contains(err.Error(), "1006"):
+				if timeout > 60 {
+					log.Fatalf("timeout exceeds maximum %d\n", timeout)
+				}
+				timeoutDuration, err := time.ParseDuration(fmt.Sprintf("%ds", timeout))
+				if err != nil {
+					log.Fatal("unable to parse timeout duration")
+				}
+				time.Sleep(timeoutDuration)
+				Watch(int(timeoutDuration.Seconds()) + 5)
 			}
+
 			log.Fatal("subscription error: ", err)
 		case header := <-headers:
+			timeout = 0
 			hash := header.Hash()
 			block, err := client.BlockByHash(context.Background(), hash)
 			if err != nil {
@@ -60,7 +75,7 @@ func Watch() {
 			logs, _ := client.FilterLogs(context.Background(), query)
 
 			closetPieces := make([]tokens.ClosetTokenWithMetaAndId, 0)
-			closetTokens := make([]tokens.ClosetTransfer, 0)
+			closetTokens := make([]string, 0)
 			rats := make([]tokens.RatTokenWithMetaAndId, 0)
 
 			for _, l := range logs {
@@ -120,9 +135,9 @@ func Watch() {
 						for i := 0; i < len(event.Ids); i++ {
 							id := event.Ids[i]
 							amount := event.Values[i]
-							transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-							closetTokens = append(closetTokens, transfer)
-							log.Println("Closet transfer", from, to, amount, event)
+							closetTokens = append(closetTokens, common.HexToAddress(from.Hex()).Hex())
+							closetTokens = append(closetTokens, common.HexToAddress(to.Hex()).Hex())
+							log.Println("Closet transfer", from, to, amount, id)
 						}
 					case blockchain.ClosetABI.Events["TransferSingle"].ID.Hex():
 						event := struct {
@@ -137,8 +152,9 @@ func Watch() {
 						to := l.Topics[3]
 						id := event.Id
 						amount := event.Value
-						transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-						closetTokens = append(closetTokens, transfer)
+						closetTokens = append(closetTokens, common.HexToAddress(from.Hex()).Hex())
+						closetTokens = append(closetTokens, common.HexToAddress(to.Hex()).Hex())
+						log.Println("Closet transfer", from, to, amount, id)
 						log.Println("Closet transfer", from, to, amount, event)
 					}
 				}
