@@ -58,8 +58,8 @@ type ClosetTokenWithMetaAndId struct {
 }
 
 type ClosetTransfers struct {
-	Block     *big.Int                       `json:"block,omitempty"`
-	Transfers map[common.Hash]ClosetTransfer `json:"transfers,omitempty"`
+	Block     *big.Int        `json:"block,omitempty"`
+	Transfers map[string]bool `json:"transfers,omitempty"`
 }
 
 type ClosetTransfer struct {

@@ -75,7 +75,7 @@ func Watch(timeout int) {
 			logs, _ := client.FilterLogs(context.Background(), query)
 
 			closetPieces := make([]tokens.ClosetTokenWithMetaAndId, 0)
-			closetTokens := make([]tokens.ClosetTransfer, 0)
+			closetTokens := make([]string, 0)
 			rats := make([]tokens.RatTokenWithMetaAndId, 0)
 
 			for _, l := range logs {
@@ -135,9 +135,9 @@ func Watch(timeout int) {
 						for i := 0; i < len(event.Ids); i++ {
 							id := event.Ids[i]
 							amount := event.Values[i]
-							transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-							closetTokens = append(closetTokens, transfer)
-							log.Println("Closet transfer", from, to, amount, event)
+							closetTokens = append(closetTokens, common.HexToAddress(from.Hex()).Hex())
+							closetTokens = append(closetTokens, common.HexToAddress(to.Hex()).Hex())
+							log.Println("Closet transfer", from, to, amount, id)
 						}
 					case blockchain.ClosetABI.Events["TransferSingle"].ID.Hex():
 						event := struct {
@@ -152,8 +152,9 @@ func Watch(timeout int) {
 						to := l.Topics[3]
 						id := event.Id
 						amount := event.Value
-						transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-						closetTokens = append(closetTokens, transfer)
+						closetTokens = append(closetTokens, common.HexToAddress(from.Hex()).Hex())
+						closetTokens = append(closetTokens, common.HexToAddress(to.Hex()).Hex())
+						log.Println("Closet transfer", from, to, amount, id)
 						log.Println("Closet transfer", from, to, amount, event)
 					}
 				}
