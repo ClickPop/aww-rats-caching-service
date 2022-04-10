@@ -223,7 +223,7 @@ func loadClosetTokens() {
 		closetTransactions.Block = big.NewInt(22075111)
 	}
 	if closetTransactions.Transfers == nil {
-		closetTransactions.Transfers = make(map[common.Hash]tokens.ClosetTransfer)
+		closetTransactions.Transfers = make(map[string]bool)
 	}
 
 	for i := closetTransactions.Block; i.Cmp(bigLastBlock) < 0; i.Add(i, big.NewInt(100)) {
@@ -252,39 +252,16 @@ func loadClosetTokens() {
 			case env.CLOSET_ADDR:
 				switch l.Topics[0].Hex() {
 				case blockchain.ClosetABI.Events["TransferBatch"].ID.Hex():
-					event := struct {
-						Ids    []*big.Int
-						Values []*big.Int
-					}{}
-					err = blockchain.ClosetABI.UnpackIntoInterface(&event, "TransferBatch", l.Data)
-					if err != nil {
-						log.Println("Error:", err)
-					}
 					from := l.Topics[2]
 					to := l.Topics[3]
-					for i := 0; i < len(event.Ids); i++ {
-						id := event.Ids[i]
-						amount := event.Values[i]
-						transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-						closetTransactions.Transfers[l.TxHash] = transfer
-					}
+					closetTransactions.Transfers[common.HexToAddress(from.Hex()).Hex()] = true
+					closetTransactions.Transfers[common.HexToAddress(to.Hex()).Hex()] = true
 					log.Println("Loaded batch transfer transaction", l.TxHash.Hex())
 				case blockchain.ClosetABI.Events["TransferSingle"].ID.Hex():
-					event := struct {
-						Id    *big.Int
-						Value *big.Int
-					}{}
-					err = blockchain.ClosetABI.UnpackIntoInterface(&event, "TransferSingle", l.Data)
-					if err != nil {
-						log.Println("Error:", err)
-					}
 					from := l.Topics[2]
 					to := l.Topics[3]
-					id := event.Id
-					amount := event.Value
-					transfer := tokens.ClosetTransfer{From: from, To: to, Id: id, Amount: amount}
-					closetTransactions.Transfers[l.TxHash] = transfer
-					log.Println("Loaded single transfer transaction", l.TxHash.Hex())
+					closetTransactions.Transfers[common.HexToAddress(from.Hex()).Hex()] = true
+					closetTransactions.Transfers[common.HexToAddress(to.Hex()).Hex()] = true
 				}
 			}
 		}
@@ -296,9 +273,9 @@ func loadClosetTokens() {
 		closetTransactionsFile.Truncate(0)
 		closetTransactionsFile.WriteAt(data, 0)
 	}
-	transferArr := make([]tokens.ClosetTransfer, 0)
-	for _, v := range closetTransactions.Transfers {
-		transferArr = append(transferArr, v)
+	transferArr := make([]string, 0)
+	for k := range closetTransactions.Transfers {
+		transferArr = append(transferArr, k)
 	}
 
 	if cmd.CurrCommand.Sync {

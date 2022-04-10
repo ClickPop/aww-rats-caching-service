@@ -51,7 +51,7 @@ func UpsertClosetPieces(pieces []tokens.ClosetTokenWithMetaAndId) {
 	}
 }
 
-func UpsertClosetTokens(transfers []tokens.ClosetTransfer) {
+func UpsertClosetTokens(transfers []string) {
 	tokens := handleClosetTransfers(transfers)
 	if len(tokens) > 0 {
 		graphQLClient := GetGraphQLClient()
@@ -63,7 +63,7 @@ func UpsertClosetTokens(transfers []tokens.ClosetTransfer) {
 	}
 }
 
-func CallHasura(rats []tokens.RatTokenWithMetaAndId, pieces []tokens.ClosetTokenWithMetaAndId, transfers []tokens.ClosetTransfer) {
+func CallHasura(rats []tokens.RatTokenWithMetaAndId, pieces []tokens.ClosetTokenWithMetaAndId, transfers []string) {
 	UpsertRats(rats)
 	UpsertClosetPieces(pieces)
 	UpsertClosetTokens(transfers)
@@ -176,63 +176,31 @@ func parseClosetPiece(piece tokens.ClosetTokenWithMetaAndId) *ClosetPieceInput {
 	return &parsedPiece
 }
 
-func handleClosetTransfers(txs []tokens.ClosetTransfer) []*ClosetTokenInput {
+func handleClosetTransfers(addresses []string) []*ClosetTokenInput {
 	changes := make([]*ClosetTokenInput, 0)
-	addrToIdListMap := make(map[common.Hash][]*big.Int)
 	closet := blockchain.ClosetContract
 	opts := blockchain.Opts
-	for _, tx := range txs {
-		id := tx.Id
-		from := tx.From
-		to := tx.To
-
-		if addrToIdListMap[from] == nil {
-			addrToIdListMap[from] = make([]*big.Int, 0)
-		}
-		exists := false
-		for _, v := range addrToIdListMap[from] {
-			if v.Cmp(id) == 0 {
-				exists = true
-			}
-		}
-		if !exists {
-			addrToIdListMap[from] = append(addrToIdListMap[from], id)
-		}
-
-		if addrToIdListMap[to] == nil {
-			addrToIdListMap[to] = make([]*big.Int, 0)
-		}
-		exists = false
-		for _, v := range addrToIdListMap[to] {
-			if v.Cmp(id) == 0 {
-				exists = true
-			}
-		}
-		if !exists {
-			addrToIdListMap[to] = append(addrToIdListMap[to], id)
-		}
+	ids, err := closet.GetAllTokenIds(opts)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	for addr, tokens := range addrToIdListMap {
-		if addr == common.BigToHash(big.NewInt(0)) {
+	for _, addr := range addresses {
+		address := addr
+		if addr == common.BigToHash(big.NewInt(0)).Hex() {
 			continue
 		}
-		log.Println("Handling token changes for address ", common.BytesToAddress(addr.Bytes()))
-		accountArr := make([]common.Address, len(tokens))
-		tokensArr := make([]*big.Int, 0)
+		log.Println("Handling token changes for address ", common.HexToAddress(addr))
+		accountArr := make([]common.Address, len(ids))
 		for i := 0; i < len(accountArr); i++ {
-			accountArr[i] = common.BytesToAddress(addr.Bytes())
+			accountArr[i] = common.HexToAddress(addr)
 		}
-		for _, id := range tokens {
-			tokensArr = append(tokensArr, id)
-		}
-		bals, err := closet.BalanceOfBatch(opts, accountArr, tokensArr)
+		bals, err := closet.BalanceOfBatch(opts, accountArr, ids)
 		if err != nil {
 			log.Println("error: ", err)
 		}
 		for i, bal := range bals {
-			address := common.BytesToAddress(addr.Bytes()).Hex()
-			token := ClosetTokenInput{TokenID: tokensArr[i], Owner: &address, Amount: bal}
+			token := ClosetTokenInput{TokenID: ids[i], Owner: &address, Amount: bal}
 			changes = append(changes, &token)
 		}
 	}

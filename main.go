@@ -21,7 +21,7 @@ func main() {
 
 	switch {
 	case cmd.CurrCommand.Cmd == "watch":
-		watcher.Watch()
+		watcher.Watch(0)
 	case cmd.CurrCommand.Cmd == "historical":
 		historical.Query()
 	default:
